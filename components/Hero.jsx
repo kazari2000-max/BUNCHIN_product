@@ -46,7 +46,7 @@ function TopBar() {
 // product visual for the hero
 function HeroDevice() {
   return (
-    <figure style={{ width: "clamp(280px, 33vw, 430px)", margin: 0, flex: "0 1 430px", position: "relative" }}>
+    <figure style={{ width: "clamp(280px, 33vw, 430px)", margin: 0, flex: "0 1 430px", position: "relative", transform: "translateY(64px)" }}>
       <Image
         src="/image/BUNCHIN_robo.png"
         alt="BUNCHIN BN-01 desktop companion robot"
