@@ -11,9 +11,9 @@ const AMBER = "#FFC24D"; // 琥珀 = rest (recovery). NOT the design-system cora
 
 // ⑤ review dialogue — 4-turn backbone (文面は別途詰める). Plan-dependent depth adds 枝, not 雑談.
 const REVIEW_TURNS = [
-  { k: "done", q: "おつかれさま。今日はどうだった？", opts: ["単語を20個できた", "思ったより進んだ", "あまり集中できなかった"] },
-  { k: "hard", q: "そっか。大変だったところは？", opts: ["始めるまでが重かった", "途中で集中が切れた", "特になかった"] },
-  { k: "step", q: "じゃあ、明日の最初の一歩を一緒に決めよう。", opts: ["単語10個から", "まず1問だけ", "5分だけ机に座る"], core: true },
+  { k: "done", q: "おつかれさま。今日はどうだった？", voiceKey: "review_done_prompt", opts: ["単語を20個できた", "思ったより進んだ", "あまり集中できなかった"] },
+  { k: "hard", q: "そっか。大変だったところは？", voiceKey: "review_hard_prompt", opts: ["始めるまでが重かった", "途中で集中が切れた", "特になかった"] },
+  { k: "step", q: "じゃあ、明日の最初の一歩を一緒に決めよう。", voiceKey: "review_step_prompt", opts: ["単語10個から", "まず1問だけ", "5分だけ机に座る"], core: true },
 ];
 
 function DemoDevice({ faceState, speaking, listening, signalWord, led, ledBlink, progress, bloom, dimExtra, onTap, tappable }) {
@@ -97,9 +97,21 @@ function DeviceDemo() {
   const [picks, setPicks] = React.useState({});
   const [tomorrowStep, setTomorrowStep] = React.useState(null); // carries to next-day nudge (円環)
   const timers = React.useRef([]);
-  const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+  const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; BunchinSound.stopVoice(); };
   const push = (t, dot, txt) => setLog(l => [...l, { t, dot, txt }]);
   const after = (ms, fn) => { const id = setTimeout(fn, ms); timers.current.push(id); return id; };
+  const speak = (text, voiceKey, durationMs, onDone) => {
+    setSpeaking(true);
+    setVoice(text);
+    BunchinSound.playVoice(voiceKey);
+    if (durationMs) {
+      after(durationMs, () => {
+        setSpeaking(false);
+        BunchinSound.stopVoice();
+        if (onDone) onDone();
+      });
+    }
+  };
   React.useEffect(() => () => clear(), []);
 
   // ② NUDGE — triggered by reserved time. Robot speaks first; STT opens; max 2 turns.
@@ -107,10 +119,13 @@ function DeviceDemo() {
     if (step !== "idle") return;
     clear();
     BunchinSound.play("session_start");
-    setStep("nudge"); setSpeaking(true); setListening(true);
-    setVoice(tomorrowStep ? `昨日は「${tomorrowStep}」って言ってたね。じゃ、そこから。` : "時間だね。準備はいい？");
+    setStep("nudge"); setListening(true);
+    speak(
+      tomorrowStep ? `昨日は「${tomorrowStep}」って言ってたね。じゃ、そこから。` : "時間だね。準備はいい？",
+      tomorrowStep ? "nudge_resume" : "nudge_default",
+      2600
+    );
     push("20:00", "#FFE45C", tomorrowStep ? "NUDGE · 予約時刻（昨日の一歩を引き継ぐ / STT開）" : "NUDGE · 予約時刻、ロボットから声かけ（STT開）");
-    after(2600, () => setSpeaking(false));
   }
 
   // ② responses — 2-turn max with two escape hatches
@@ -118,10 +133,8 @@ function DeviceDemo() {
     if (step !== "nudge") return;
     clear();
     if (kind === "start") {
-      setSpeaking(true);
-      setVoice("いいね。まず5分だけ、昨日の続きから一緒にやろう。");
+      speak("いいね。まず5分だけ、昨日の続きから一緒にやろう。", "start_reply", 2600, () => { setListening(false); setVoice(""); enterFocus(); });
       push("20:00", "#6EB6FF", "返答 → 開始へピボット");
-      after(2600, () => { setSpeaking(false); setListening(false); setVoice(""); enterFocus(); });
     } else if (kind === "silent") {
       // 完全な沈黙 → 着地させず待機へ引く
       setSpeaking(false); setListening(false); setVoice("");
@@ -129,10 +142,9 @@ function DeviceDemo() {
       setStep("idle");
     } else if (kind === "stop") {
       // 明確な「やめる」→ 茶化さず引いて再設定
-      setSpeaking(true); setListening(false);
-      setVoice("わかった。今日は無理しない。また予約しておくね。");
+      setListening(false);
+      speak("わかった。今日は無理しない。また予約しておくね。", "stop_reply", 2400, () => { setVoice(""); setStep("idle"); });
       push("20:00", "#5a5a5a", "「やめる」→ 引いて再設定（責めない）");
-      after(2400, () => { setSpeaking(false); setVoice(""); setStep("idle"); });
     }
   }
 
@@ -146,10 +158,9 @@ function DeviceDemo() {
     if (step !== "focus") return;
     clear();
     BunchinSound.play("recovery");
-    setStep("recovery"); setSpeaking(true); setListening(true);
-    setVoice("そっか、今は重いね。全部やらなくていい。あと1問だけ見てみよう。");
+    setStep("recovery"); setListening(true);
+    speak("そっか、今は重いね。全部やらなくていい。あと1問だけ見てみよう。", "recovery_rescope", 3200);
     push("20:14", AMBER, "RECOVERY · タップで助けを求めた（琥珀 / 進捗は保持）");
-    after(3200, () => setSpeaking(false));
     after(3500, () => { setListening(false); setVoice(""); setStep("focus"); setWorking(true); });
   }
 
@@ -166,24 +177,22 @@ function DeviceDemo() {
   function startReview() {
     clear();
     setStep("review"); setReviewTurn(0); setPicks({});
-    setSpeaking(true); setListening(true);
-    setVoice(REVIEW_TURNS[0].q);
+    setListening(true);
+    speak(REVIEW_TURNS[0].q, REVIEW_TURNS[0].voiceKey, 2200);
     push("20:26", "#78FF9E", "REVIEW · 振り返り開始（ロボットから / STT開 · 本日 3 度目）");
-    after(2200, () => setSpeaking(false));
   }
 
   // close — release the day's accumulated reward; write the effort log; carry tomorrow's step.
   function closeReview(finalPicks) {
     clear();
-    setReviewTurn(99); setListening(false); setSpeaking(true);
-    setVoice("いいね。今日はここまで。おつかれさま。");
+    setReviewTurn(99); setListening(false);
+    speak("いいね。今日はここまで。おつかれさま。", "review_close", 2400);
     const parts = [];
     if (finalPicks.done) parts.push("できた:" + finalPicks.done);
     if (finalPicks.hard) parts.push("大変:" + finalPicks.hard);
     if (finalPicks.step) parts.push("明日:" + finalPicks.step);
     push("20:27", "#78FF9E", "SAVED · " + (parts.length ? parts.join(" / ") : "ログのみ確定"));
     if (finalPicks.step) setTomorrowStep(finalPicks.step);
-    after(2400, () => setSpeaking(false));
   }
 
   // a review turn — log the user's self-reported words, then advance or close.
@@ -202,8 +211,8 @@ function DeviceDemo() {
     push("20:26", cur.core ? "#78FF9E" : "#6EB6FF", "▸ " + choice + (cur.core ? "（明日の一歩）" : ""));
     const next = t + 1;
     if (next < REVIEW_TURNS.length) {
-      setReviewTurn(next); setSpeaking(true); setVoice(REVIEW_TURNS[next].q);
-      after(2000, () => setSpeaking(false));
+      setReviewTurn(next);
+      speak(REVIEW_TURNS[next].q, REVIEW_TURNS[next].voiceKey, 2000);
     } else {
       closeReview(np);
     }

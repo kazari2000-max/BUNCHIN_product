@@ -1,8 +1,8 @@
 // pp-foundation.jsx — shared primitives + sound system for the BUNCHIN product page.
 
 // ---- Sound system ----------------------------------------------------------
-// 3 demo SE: tap_start, session_start, complete. First play happens on a user
-// gesture (the device tap), satisfying autoplay policies. Global mute toggle.
+// Demo SE + BUNCHIN voice lines. First play happens on a user gesture,
+// satisfying autoplay policies. Global mute toggle applies to both.
 const BunchinSound = (() => {
   const SRC = {
     tap_start: "/audio/tap_start.wav",
@@ -10,20 +10,50 @@ const BunchinSound = (() => {
     recovery: "/audio/recovery.wav",
     complete: "/audio/complete.wav",
   };
+  const VOICE_SRC = {
+    nudge_default: "/voice/nudge_default.wav",
+    nudge_resume: "/voice/nudge_resume.wav",
+    start_reply: "/voice/start_reply.wav",
+    stop_reply: "/voice/stop_reply.wav",
+    recovery_rescope: "/voice/recovery_rescope.wav",
+    review_done_prompt: "/voice/review_done_prompt.wav",
+    review_hard_prompt: "/voice/review_hard_prompt.wav",
+    review_step_prompt: "/voice/review_step_prompt.wav",
+    review_close: "/voice/review_close.wav",
+  };
   const cache = {};
+  const voiceCache = {};
+  let activeVoice = null;
   let muted = false;
   function get(key) {
     if (!cache[key]) { const a = new Audio(SRC[key]); a.preload = "auto"; cache[key] = a; }
     return cache[key];
   }
+  function getVoice(key) {
+    if (!voiceCache[key]) { const a = new Audio(VOICE_SRC[key]); a.preload = "auto"; voiceCache[key] = a; }
+    return voiceCache[key];
+  }
+  function stopVoice() {
+    if (!activeVoice) return;
+    try { activeVoice.pause(); activeVoice.currentTime = 0; } catch (e) {}
+    activeVoice = null;
+  }
   return {
-    preload() { Object.keys(SRC).forEach(get); },
+    preload() { Object.keys(SRC).forEach(get); Object.keys(VOICE_SRC).forEach(getVoice); },
     play(key) {
       if (muted || !SRC[key]) return;
       const a = get(key);
       try { a.currentTime = 0; a.play().catch(() => {}); } catch (e) {}
     },
-    setMuted(m) { muted = m; },
+    playVoice(key) {
+      if (muted || !VOICE_SRC[key]) return;
+      stopVoice();
+      const a = getVoice(key);
+      activeVoice = a;
+      try { a.currentTime = 0; a.play().catch(() => {}); } catch (e) {}
+    },
+    stopVoice,
+    setMuted(m) { muted = m; if (muted) stopVoice(); },
     isMuted() { return muted; },
   };
 })();
