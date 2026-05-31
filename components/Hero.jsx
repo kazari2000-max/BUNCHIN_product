@@ -1,8 +1,8 @@
 "use client";
+import Image from "next/image";
 import React from "react";
-import { PixelFace } from "./PixelFace";
 import { BunchinSound } from "./ui";
-// pp-hero.jsx — top bar (with global sound toggle), hero, static standby device.
+// pp-hero.jsx — top bar (with global sound toggle), hero, product visual.
 
 function SoundToggle() {
   const [on, setOn] = React.useState(false);
@@ -43,22 +43,28 @@ function TopBar() {
   );
 }
 
-// static standby device for the hero
+// product visual for the hero
 function HeroDevice() {
   return (
-    <div style={{ width: 300, background: "#0A0A0A", border: "1.5px solid #1f1f1f", borderBottom: "4px solid #000", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.18em", color: "#5a5a5a" }}>BN-01</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: "0.14em", color: "#5a5a5a" }}>STANDBY</span>
-          <div style={{ width: 7, height: 7, background: "#FFE45C", animation: "bunchin-blink 1.06s steps(1) infinite" }} />
-        </div>
-      </div>
-      <div style={{ position: "relative", background: "#000", border: "1px solid #161616", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px)" }} />
-        <PixelFace state="standby" px={6} eyeGap={62} />
-      </div>
-    </div>
+    <figure style={{ width: "clamp(280px, 33vw, 430px)", margin: 0, flex: "0 1 430px", position: "relative" }}>
+      <Image
+        src="/image/BUNCHIN_robo.png"
+        alt="BUNCHIN BN-01 desktop companion robot"
+        width="1280"
+        height="1280"
+        priority
+        sizes="(max-width: 760px) 78vw, 33vw"
+        unoptimized
+        decoding="async"
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+          objectFit: "contain",
+          filter: "drop-shadow(0 18px 36px rgba(0,0,0,0.55))",
+        }}
+      />
+    </figure>
   );
 }
 
