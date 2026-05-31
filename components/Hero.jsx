@@ -48,7 +48,7 @@ function HeroDevice() {
   return (
     <figure style={{ width: "clamp(280px, 33vw, 430px)", margin: 0, flex: "0 1 430px", position: "relative", transform: "translateY(64px)" }}>
       <Image
-        src="/image/BUNCHIN_robo.png"
+        src="/image/BUNCHINimage.png"
         alt="BUNCHIN BN-01 desktop companion robot"
         width="1280"
         height="1280"
