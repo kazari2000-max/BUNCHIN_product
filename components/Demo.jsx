@@ -101,16 +101,18 @@ function DeviceDemo() {
   const push = (t, dot, txt) => setLog(l => [...l, { t, dot, txt }]);
   const after = (ms, fn) => { const id = setTimeout(fn, ms); timers.current.push(id); return id; };
   const speak = (text, voiceKey, durationMs, onDone) => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      setSpeaking(false);
+      BunchinSound.stopVoice();
+      if (onDone) onDone();
+    };
     setSpeaking(true);
     setVoice(text);
-    BunchinSound.playVoice(voiceKey);
-    if (durationMs) {
-      after(durationMs, () => {
-        setSpeaking(false);
-        BunchinSound.stopVoice();
-        if (onDone) onDone();
-      });
-    }
+    const played = BunchinSound.playVoice(voiceKey, finish);
+    if (!played && durationMs) after(durationMs, finish);
   };
   React.useEffect(() => () => clear(), []);
 
@@ -159,9 +161,10 @@ function DeviceDemo() {
     clear();
     BunchinSound.play("recovery");
     setStep("recovery"); setListening(true);
-    speak("そっか、今は重いね。全部やらなくていい。あと1問だけ見てみよう。", "recovery_rescope", 3200);
+    speak("そっか、今は重いね。全部やらなくていい。あと1問だけ見てみよう。", "recovery_rescope", 3200, () => {
+      setListening(false); setVoice(""); setStep("focus"); setWorking(true);
+    });
     push("20:14", AMBER, "RECOVERY · タップで助けを求めた（琥珀 / 進捗は保持）");
-    after(3500, () => { setListening(false); setVoice(""); setStep("focus"); setWorking(true); });
   }
 
   // ④ COMPLETE — triggered when progress reaches goal
@@ -279,9 +282,9 @@ function DeviceDemo() {
           <div style={{ display: "flex", gap: 9, width: 320, flexWrap: "wrap" }}>
             {step === "idle" && <Btn onClick={nudge} color="#FFE45C">▶ 予約時刻 20:00 になる</Btn>}
             {step === "nudge" && <React.Fragment>
-              <Btn onClick={() => reply("start")} color="#FFE45C">はじめる</Btn>
-              <Btn onClick={() => reply("silent")} ghost color="#6a6a6a">…沈黙</Btn>
-              <Btn onClick={() => reply("stop")} ghost color="#6a6a6a">今日はやめる</Btn>
+              <Btn onClick={() => reply("start")} disabled={speaking} color="#FFE45C">はじめる</Btn>
+              <Btn onClick={() => reply("silent")} disabled={speaking} ghost color="#6a6a6a">…沈黙</Btn>
+              <Btn onClick={() => reply("stop")} disabled={speaking} ghost color="#6a6a6a">今日はやめる</Btn>
             </React.Fragment>}
             {step === "focus" && <React.Fragment>
               <Btn onClick={() => setWorking(w => !w)} ghost color={working ? "#6EB6FF" : "#9C9C9C"}>{working ? "打鍵中 ▸ 手を止める" : "小休止 ▸ 打鍵に戻る"}</Btn>
@@ -291,11 +294,11 @@ function DeviceDemo() {
             {(step === "complete") && <Btn disabled color="#78FF9E">… 完走</Btn>}
             {step === "review" && reviewTurn >= 0 && reviewTurn <= 2 && <React.Fragment>
               {REVIEW_TURNS[reviewTurn].opts.map(o => (
-                <Btn key={o} onClick={() => reviewReply(o)} ghost color={REVIEW_TURNS[reviewTurn].core ? "#78FF9E" : "#6EB6FF"}>{o}</Btn>
+                <Btn key={o} onClick={() => reviewReply(o)} disabled={speaking} ghost color={REVIEW_TURNS[reviewTurn].core ? "#78FF9E" : "#6EB6FF"}>{o}</Btn>
               ))}
-              <Btn onClick={() => reviewReply("__rest")} ghost color="#5a5a5a">今日はもう休む</Btn>
+              <Btn onClick={() => reviewReply("__rest")} disabled={speaking} ghost color="#5a5a5a">今日はもう休む</Btn>
             </React.Fragment>}
-            {step === "review" && reviewTurn === 99 && <Btn onClick={reset} ghost color="#9C9C9C">↺ 翌日の待機へ</Btn>}
+            {step === "review" && reviewTurn === 99 && <Btn onClick={reset} disabled={speaking} ghost color="#9C9C9C">↺ 翌日の待機へ</Btn>}
           </div>
           {step === "focus" && (
             <p style={{ width: 320, fontFamily: "var(--font-mono)", fontSize: 10, lineHeight: 1.7, letterSpacing: "0.04em", color: "#5a5a5a", margin: 0 }}>

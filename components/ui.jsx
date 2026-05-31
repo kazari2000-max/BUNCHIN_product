@@ -24,6 +24,7 @@ const BunchinSound = (() => {
   const cache = {};
   const voiceCache = {};
   let activeVoice = null;
+  let activeVoiceEnded = null;
   let muted = false;
   function get(key) {
     if (!cache[key]) { const a = new Audio(SRC[key]); a.preload = "auto"; cache[key] = a; }
@@ -35,8 +36,10 @@ const BunchinSound = (() => {
   }
   function stopVoice() {
     if (!activeVoice) return;
+    if (activeVoiceEnded) activeVoice.removeEventListener("ended", activeVoiceEnded);
     try { activeVoice.pause(); activeVoice.currentTime = 0; } catch (e) {}
     activeVoice = null;
+    activeVoiceEnded = null;
   }
   return {
     preload() { Object.keys(SRC).forEach(get); Object.keys(VOICE_SRC).forEach(getVoice); },
@@ -45,12 +48,34 @@ const BunchinSound = (() => {
       const a = get(key);
       try { a.currentTime = 0; a.play().catch(() => {}); } catch (e) {}
     },
-    playVoice(key) {
-      if (muted || !VOICE_SRC[key]) return;
+    playVoice(key, onEnded) {
+      if (muted || !VOICE_SRC[key]) return false;
       stopVoice();
       const a = getVoice(key);
+      const done = () => {
+        if (activeVoice !== a) return;
+        activeVoice.removeEventListener("ended", done);
+        activeVoice = null;
+        activeVoiceEnded = null;
+        if (onEnded) onEnded();
+      };
       activeVoice = a;
-      try { a.currentTime = 0; a.play().catch(() => {}); } catch (e) {}
+      activeVoiceEnded = done;
+      a.addEventListener("ended", done);
+      try {
+        a.currentTime = 0;
+        const playPromise = a.play();
+        if (playPromise) playPromise.catch(() => {
+          if (activeVoice !== a) return;
+          stopVoice();
+          if (onEnded) onEnded();
+        });
+        return true;
+      } catch (e) {
+        stopVoice();
+        if (onEnded) onEnded();
+        return false;
+      }
     },
     stopVoice,
     setMuted(m) { muted = m; if (muted) stopVoice(); },

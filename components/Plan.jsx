@@ -97,6 +97,7 @@ function Closing() {
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.1em", color: "#5a5a5a" }}>BUNCHIN · BN-01 · FOR PARTNERS & BUILDERS · 2026</span>
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.1em", color: "#5a5a5a" }}>話しすぎない。でも、ちゃんといる。</span>
       </div>
+      <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: "0.08em", color: "#3a3a3a", margin: "14px 0 0", textAlign: "right" }}>VOICEVOX：四国めたん</p>
     </Section>
   );
 }
