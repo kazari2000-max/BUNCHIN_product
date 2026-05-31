@@ -1,0 +1,68 @@
+/* ============================================================
+   BUNCHIN product page — globals.css
+   Adapted from the design system's colors_and_type.css.
+   Fonts self-hosted from /public/fonts; JetBrains Mono via <link> in layout.
+   ============================================================ */
+
+@font-face {
+  font-family: "GenEi M Gothic 2";
+  src: url("/fonts/GenEiMGothic2-Regular.ttf") format("truetype");
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "GenEi M Gothic 2";
+  src: url("/fonts/GenEiMGothic2-Medium.ttf") format("truetype");
+  font-weight: 500; font-display: swap;
+}
+@font-face {
+  font-family: "GenEi M Gothic 2";
+  src: url("/fonts/GenEiMGothic2-Heavy.ttf") format("truetype");
+  font-weight: 900; font-display: swap;
+}
+@font-face {
+  font-family: "DenkiChip";
+  src: url("/fonts/DenkiChip.ttf") format("truetype");
+  font-weight: 400; font-display: swap;
+}
+
+:root {
+  --font-display: "GenEi M Gothic 2", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --font-body: "GenEi M Gothic 2", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", "Consolas", "Menlo", monospace;
+  --font-pixel: "DenkiChip", "JetBrains Mono", monospace;
+
+  --flat-black: #050505;
+  --terminal-panel: #0D0D0D;
+  --grid-gray: #262626;
+  --terminal-white: #F7F3EA;
+  --muted-gray: #9C9C9C;
+  --signal-blue: #6EB6FF;
+  --active-yellow: #FFE45C;
+  --complete-green: #78FF9E;
+  --reset-coral: #FF7B66;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #050505;
+  color: #F7F3EA;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+html { scroll-behavior: smooth; }
+
+::selection { background: #FFE45C; color: #050505; }
+
+::-webkit-scrollbar { width: 9px; }
+::-webkit-scrollbar-thumb { background: #1a1a1a; }
+::-webkit-scrollbar-track { background: #050505; }
+
+/* keyframes used across the device UI (sway is injected by PixelFace at runtime) */
+@keyframes bunchin-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
