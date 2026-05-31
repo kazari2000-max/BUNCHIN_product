@@ -21,11 +21,21 @@ npm run build
 npm run start
 ```
 
-## デプロイ（Vercel 推奨）
+## デプロイ（Cloudflare Pages）
+このページはSSR/APIなしの静的サイトとして書き出せるため、Cloudflare Pagesでは以下を選択します。
+
+- Framework preset: **Next.js (Static HTML Export)**
+- Build command: `npx next build`
+- Build output directory: `out`
+- Root directory: 未指定（リポジトリルート）
+- Production branch: `main`
+
+`next.config.mjs` で `output: "export"` を有効化しているため、`npm run build` 後に `out/` が生成されます。
+
+## デプロイ（Vercel）
 1. このリポジトリを GitHub に push
 2. [vercel.com](https://vercel.com) で New Project → リポジトリを import
 3. Framework Preset が Next.js として検出されていることを確認 → Deploy
-   - フレームワークは自動で Next.js として検出されます。追加設定は不要です。
 
 ## 構成
 ```
